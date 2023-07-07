@@ -12,10 +12,20 @@ import javax.swing.JFrame
 import java.awt.Component
 import java.awt.event.MouseMotionListener
 import java.awt.event.ComponentAdapter
+import java.awt.Container
+import javax.swing.SwingUtilities
+import java.awt.Canvas
+
 
 case class KeyInfo(pressed: Boolean, justPressed: Boolean)
-case class WindowInfo(keys: Map[Int, KeyInfo], leftMouseButton: KeyInfo, rightMouseButton: KeyInfo, windowMousePosition: Vector2, canvasMousePosition: Vector2, isActive: Boolean, parentSize: Vector2):
+case class WindowInfo(keys: Map[Int, KeyInfo], leftMouseButton: KeyInfo, rightMouseButton: KeyInfo, windowMousePosition: Vector2, canvasMousePosition: Vector2, isActive: Boolean, parentSize: Vector2, deltaTime: Double):
     def isKeyDown(keysDown: Int*): Boolean = keysDown.forall(keys.getOrElse(_, KeyInfo(false, false)).pressed)
+    def isInputDown(inputs: (Int | MouseInput)*): Boolean = inputs.forall {
+        case key: Int => keys.getOrElse(key, KeyInfo(false, false)).pressed
+        case LeftMouse => leftMouseButton.pressed
+        case RightMouse => rightMouseButton.pressed
+    }
+    def apply(inputs: (Int | MouseInput)*): Boolean = isInputDown(inputs: _*)
     def inRectangle(rectangle: Rectangle2D): Boolean = rectangle.contains(canvasMousePosition)
     def debugString: String =
         s"""
@@ -26,13 +36,18 @@ case class WindowInfo(keys: Map[Int, KeyInfo], leftMouseButton: KeyInfo, rightMo
         rightMouse: ${rightMouseButton}
         isHovered: $isActive
         parentSize: $parentSize
+        dt: $deltaTime
         """
+sealed trait MouseInput
+case object LeftMouse extends MouseInput
+case object RightMouse extends MouseInput
 
 
 
 
 
-class InputManager extends KeyListener with MouseListener with MouseMotionListener {
+
+class InputManager(canvas: Canvas) extends KeyListener with MouseListener with MouseMotionListener {
     private val keysDown: Set[Int] = Set.empty
     private val justPressed: Set[Int] = Set.empty
     private var mousePos = Vector2.zero
@@ -40,6 +55,7 @@ class InputManager extends KeyListener with MouseListener with MouseMotionListen
     private var rightMouse: KeyInfo = KeyInfo(false, false)
     private var hoveringComponent: Boolean = false
     private var parentSize: Vector2 = Vector2.zero
+    private var lastResetTime = System.nanoTime()
 
     def getInputInfo(camera: Camera): WindowInfo =
         WindowInfo(
@@ -50,9 +66,17 @@ class InputManager extends KeyListener with MouseListener with MouseMotionListen
             camera.toCanvas(mousePos),
             hoveringComponent,
             parentSize,
+            (System.nanoTime() - lastResetTime) / 1e9
         )
+
         
-    def reset(): Unit = ???
+    def reset(): Unit = 
+        lastResetTime = System.nanoTime()
+        justPressed.clear()
+
+    def subscribeMouse(e: Component): Unit =
+        e.addMouseListener(this)
+        e.addMouseMotionListener(this)
 
     override def keyReleased(e: KeyEvent): Unit = 
         keysDown.remove(e.getKeyCode())   
@@ -70,7 +94,8 @@ class InputManager extends KeyListener with MouseListener with MouseMotionListen
             case MouseEvent.BUTTON3 => rightMouse = KeyInfo(true, true)
             case _ => ()    
     override def mouseEntered(e: MouseEvent): Unit =
-        hoveringComponent = true
+        if e.getComponent() == canvas then
+            hoveringComponent = true
     override def mouseClicked(e: MouseEvent): Unit = ()
 
     override def mouseReleased(e: MouseEvent): Unit = 
@@ -81,9 +106,14 @@ class InputManager extends KeyListener with MouseListener with MouseMotionListen
 
 
     override def mouseMoved(e: MouseEvent): Unit = 
-        mousePos = Vector2(e.getX(), e.getY())
+        val (x, y) = (e.getX(), e.getY())
+        val newThing = SwingUtilities.convertPoint(e.getComponent(), x, y, canvas)
+        mousePos = Vector2(newThing.x, newThing.y)
 
-    override def mouseDragged(e: MouseEvent): Unit = ()
+    override def mouseDragged(e: MouseEvent): Unit = 
+        val (x, y) = (e.getX(), e.getY())
+        val newThing = SwingUtilities.convertPoint(e.getComponent(), x, y, canvas)
+        mousePos = Vector2(newThing.x, newThing.y)
 
 
     def attach(component: Component): Unit = {

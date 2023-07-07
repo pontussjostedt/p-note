@@ -10,6 +10,8 @@ import java.awt.geom.Area
 import java.awt.geom.Path2D
 import java.awt.geom.PathIterator
 import scala.collection.mutable.ArrayBuffer
+import java.awt.Component
+
 type Vector2 = Point2D.Double
 object Vector2:
     def apply(x: Double, y: Double): Vector2 =
@@ -62,6 +64,16 @@ extension (point2D: Vector2)
     infix def /(scalar: Double): Vector2 = 
         Vector2(point2D.getX() / scalar, point2D.getY() / scalar)
 
+    def dot(vec2: Vector2): Double = 
+        point2D.getX() * vec2.getX() + point2D.getY() * vec2.getY()
+
+    def normalized: Vector2 = 
+        if point2D.getX() == 0 && point2D.getY() == 0 then
+            Vector2.zero
+        else
+            val mag = point2D.mag
+            Vector2(point2D.getX()/mag, point2D.getY()/mag)
+
     def arg: Double = 
         if point2D.getX() < 0 then
             math.atan(point2D.getY()/point2D.getX()) + math.Pi
@@ -72,7 +84,7 @@ extension (point2D: Vector2)
         (other - point2D).arg
 
     def mag: Double =
-        math.sqrt(point2D.getX()*point2D.getX() +  point2D.getY() * point2D.getX())
+        math.hypot(point2D.getX(), point2D.getY())
 
     def niceString(): String = s"Vector(${point2D.x.toInt}, ${point2D.y.toInt})"
    
@@ -129,6 +141,8 @@ extension (affine: AffineTransform)
             val newAffine = affine.createInverse()
             newAffine.createTransformedShape(rect).getBounds2D()
 
+
+
 private given Conversion[Double, Int] = _.toInt
 extension (g2d: Graphics2D)
     def clearRect(p1: Vector2, width: Double, height: Double): Unit =
@@ -179,5 +193,142 @@ extension (rect: Rectangle2D)
     def getMax(): Vector2 =
         Vector2(rect.getMaxX(), rect.getMaxY())
 
+
+extension (component: Component)
+    def translateBounds(vec: Vector2): Unit =
+        val bounds = component.getBounds()
+        bounds.translate(vec.x, vec.y)
+        component.setBounds(bounds)
+
+
+extension (path: Path2D.Double)
+    def toPointArrayBuffer(): ArrayBuffer[Vector2] =
+        val out = ArrayBuffer[Vector2]()
+        val iter = path.getPathIterator(null)
+        val coords = Array[Double](0, 0)
+        while !iter.isDone() do
+            iter.currentSegment(coords)
+            out += Vector2(coords(0), coords(1))
+            iter.next()
+        out
+
+    def curveTo(vec1: Vector2, vec2: Vector2, vec3: Vector2): Unit =
+        path.curveTo(vec1.x, vec1.y, vec2.x, vec2.y, vec3.x, vec3.y)
+
+    def lineTo(vec: Vector2): Unit =
+        path.lineTo(vec.x, vec.y)
+
+    def moveTo(vec: Vector2): Unit =
+        path.moveTo(vec.x, vec.y)
+
+    def quadTo(vec1: Vector2, vec2: Vector2): Unit =
+        path.quadTo(vec1.x, vec1.y, vec2.x, vec2.y)
+
+
+extension (array: ArrayBuffer[Segment])
+    def toPath(): Path2D.Double =
+        val path = Path2D.Double()
+        array.foreach { case Segment(startPoint, handleIn, handleOut) =>
+            if handleIn.isEmpty && handleOut.isEmpty then
+                if path.getCurrentPoint() == null then
+                    path.moveTo(startPoint)
+                else
+                    path.lineTo(startPoint)
+            else
+                val handleIn2 = handleIn.getOrElse(startPoint)
+                val handleOut2 = handleOut.getOrElse(startPoint)
+                
+                if path.getCurrentPoint() == null then
+                    path.moveTo(startPoint)
+                else
+                    path.curveTo(handleIn2, handleOut2, startPoint)
+            
+        }
+        path
+
+    def toPath2(): Path2D.Double =
+        val path = Path2D.Double()
+        array.foreach { case Segment(startPoint, handleIn, handleOut) =>
+            if handleIn.isEmpty && handleOut.isEmpty then
+                if path.getCurrentPoint() == null then
+                    path.moveTo(startPoint)
+                else
+                    path.lineTo(startPoint)
+            else
+                val handleIn2 = handleIn.getOrElse(startPoint)
+                val handleOut2 = handleOut.getOrElse(startPoint)
+                
+                if path.getCurrentPoint() == null then
+                    path.moveTo(startPoint)
+                else
+                    path.curveTo(startPoint, handleIn2, handleOut2)
+            
+        }
+        path
+
+    def toPath3(): Path2D.Double =
+        val path = Path2D.Double()
+
+        val closed = false
+        val preicsion = 5
+
+        if array.nonEmpty then
+            val firstSegment = array.head
+            path.moveTo(firstSegment.point)
+            var prevCord = firstSegment.point
+            var out = Vector2.zero
+
+            array.tail.foreach { case Segment(current, handleInOpt, handleOutOpt) => 
+                if handleInOpt.isDefined && handleOutOpt.isDefined then
+                    val inPoint = current + handleInOpt.get
+
+                    path.curveTo(
+                        out - prevCord,
+                        inPoint - prevCord,
+                        current - prevCord
+                    )
+                else
+                    val dP = current - prevCord
+                    
+                    if dP.x == 0 then
+                        path.lineTo(current)
+                    else if dP.y == 0 then
+                        path.lineTo(current)
+                    else
+                        path.lineTo(current-prevCord
+                        
+                )
+
+                prevCord = current
+                out = current + handleOutOpt.getOrElse(Vector2.zero)
+            }
+
+        path
+
+    def toPath4(): Path2D.Double =
+        val path = Path2D.Double()
+
+        var prevPoint = Vector2.zero
+        var outPoint = Vector2.zero
+
+        var first = true
+        def addSegment(segment: Segment): Unit =
+            val currentPoint = segment.point
+            if first then
+                path.moveTo(currentPoint)
+                first = false
+            else
+                val inPoint = currentPoint + segment.handleIn.getOrElse(Vector2.zero)
+                if inPoint == currentPoint && outPoint == prevPoint then
+                    if true then
+                        val dp = currentPoint// - prevPoint
+                        path.lineTo(dp)
+                else
+                    path.curveTo(outPoint, inPoint, currentPoint)
+            prevPoint = currentPoint
+            outPoint = currentPoint + segment.handleOut.getOrElse(Vector2.zero)
+            
+        array.foreach(addSegment(_))
+        path
 
         

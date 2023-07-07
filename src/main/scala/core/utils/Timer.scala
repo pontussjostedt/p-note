@@ -13,9 +13,9 @@ final case class Timer(msDelay: Long, private val startOnCd: Boolean = true):
 case class FPSMeassure(collectionPeriod: Long):
     val timer = Timer(collectionPeriod)
     var frameCount = 0
-    def tick: Unit = 
+    def tick(): Unit = 
         frameCount += 1
         if timer.isOverReset then
-            println(s"FPS = ${1000*frameCount/collectionPeriod.toDouble}")
+            //println(s"FPS = ${1000*frameCount/collectionPeriod.toDouble}")
             frameCount = 0
 
