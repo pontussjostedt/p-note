@@ -7,7 +7,6 @@ import scala.util.Try
 import javax.swing.JButton
 import java.awt.Rectangle
 import customswingcomponents.WebBrowser
-import customswingcomponents.PDFViewer
 import state.DefaultToolState
 import state.CanvasState
 import scala.collection.mutable.ArrayBuffer
@@ -24,42 +23,12 @@ object Launcher:
         println("Starting loop")
         var currentState: CanvasState = DefaultToolState(ClampedCanvasObjectManager(SpatialHash[CanvasObject](25, _.shape), camera))
         val path2D = new java.awt.geom.Path2D.Double()
-        path2D.moveTo(0, 0)
-        path2D.lineTo(10, 10)
-        path2D.lineTo(23, 24)
-        path2D.lineTo(32, 31)
-        path2D.lineTo(40, 15);
-        path2D.lineTo(55, 5);
-        path2D.lineTo(60, 20);
-        path2D.lineTo(50, 35);
-        path2D.lineTo(100, 100);
-        path2D.lineTo(230, 240);
-        path2D.lineTo(320, 310);
-        path2D.lineTo(400, 150);
-        path2D.lineTo(550, 50);
-        path2D.lineTo(600, 200);
-        path2D.lineTo(500, 350);
-        path2D.lineTo(400, 450);
-        path2D.lineTo(450, 600);
-        path2D.lineTo(750, 350);
-        path2D.lineTo(900, 300);
-        path2D.lineTo(1050, 350);
-        path2D.lineTo(1200, 400);
-        path2D.lineTo(1250, 550);
-        path2D.lineTo(1150, 700);
-        path2D.lineTo(1000, 750);
-        path2D.lineTo(850, 800);
-        path2D.lineTo(700, 750);
-        path2D.lineTo(600, 600);
-        path2D.lineTo(650, 450);
 
         val p = PathSimplification.fit(path2D.toPointArrayBuffer(), false, 1000)
-        println(p)
+
         
         val tan1 = Vector2(-163, -166)
-        println(tan1/tan1.mag)
-        println(tan1.mag)
-        println(math.hypot(tan1.x, tan1.y))
+      
         
         //println(p.mkString("\n"))
         //path2D.lineTo(0, 0)

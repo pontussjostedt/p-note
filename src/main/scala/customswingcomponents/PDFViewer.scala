@@ -1,13 +1,11 @@
 package customswingcomponents
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import javafx.embed.swing.JFXPanel
 import java.io.File
 import java.awt.Image
 import javax.swing.JPanel
 import javax.swing.JLabel
 
+/*
 class PDFViewer(path: String="C:/Users/Pontu/OneDrive/Dokument/Funkfunktster_PONTUS_SJ%C3%96STEDT.pdf") extends JPanel:
     val label = JLabel()
     val document: PDDocument = PDDocument.load(File(path))
@@ -27,3 +25,4 @@ class PDFViewer(path: String="C:/Users/Pontu/OneDrive/Dokument/Funkfunktster_PON
     
 
 
+*/

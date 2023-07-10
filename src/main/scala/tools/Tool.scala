@@ -26,10 +26,7 @@ class LineDrawingTool extends CanvasObject {
                 path.foreach(_.moveTo(mousePos))
             None
         else if !handler.windowInfo(LeftMouse) && path.isDefined then
-            handler.geometryStore.offer(CanvasPath(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 1.5).toPath4()))
-            //Thread.sleep(1000)
-            //System.exit(0)
-            path.foreach(path => println(path.toPointArrayBuffer().map(vec2 => s"point(${vec2.x}, ${vec2.y})").mkString("[", ", ", "]")))
+            handler.geometryStore.offer(CanvasPath(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 10).toPath4()))
             path = None
             None
         else
@@ -38,7 +35,7 @@ class LineDrawingTool extends CanvasObject {
     private val dummyShape = Path2D.Double()
     override def shape: Shape = path.getOrElse(dummyShape) 
     override def draw(g2d: Graphics2D): Unit = 
-        g2d.setStroke(BasicStroke(10))
+        g2d.setStroke(BasicStroke(4))
         g2d.draw(shape)
 
 }

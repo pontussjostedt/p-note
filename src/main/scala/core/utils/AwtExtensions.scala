@@ -169,6 +169,9 @@ extension (g2d: Graphics2D)
 
     def clearRect(p1: Vector2, size: Vector2): Unit =
         g2d.clearRect(p1.x, p1.y, size.x, size.y)
+
+    def fillRect(p1: Vector2, size: Vector2): Unit =
+        g2d.fillRect(p1.x, p1.y, size.x, size.y)
 extension (shape: Shape)
     def contains(inner: Shape): Boolean =
         shape.contains(inner.getBounds()) && {

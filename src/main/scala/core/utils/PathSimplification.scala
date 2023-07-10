@@ -38,21 +38,24 @@ object PathSimplification {
     def isMachineZero(x: Double): Boolean = x >= -machine_epsilon && x <= machine_epsilon
 
     def fit(points: ArrayBuffer[Vector2], closed: Boolean, error: Double): ArrayBuffer[Segment] = 
-        println("\n\n**** STARTING **** \n\n")
+
+        //println("\n\n**** STARTING **** \n\n")
+        if points.length <= 1 then return ArrayBuffer()
         if closed then ()
 
         val length = points.length
 
         val segments = ArrayBuffer(Segment(points.head, None, None))
         fitCubic(points, segments, error, 0, length - 1, points(1) - points(0), points(length - 2) - points(length - 1))
-        println(s"[${points.map(formatPoint).mkString(", ")}]")
+        //println(s"[${points.map(formatPoint).mkString(", ")}]")
+        println(s"Before: ${points.length} After: ${segments.length}")
         segments
 
     def fitCubic(points: ArrayBuffer[Vector2], segments: ArrayBuffer[Segment], error: Double, first: Int, last: Int, tan1: Vector2, tan2: Vector2): Unit =
-        println("**** FITCUBIC ****")
-        println(s"first: ${first} last: ${last} error: ${error.format}\ntan1: ${formatPoint(tan1)}  tan2: ${formatPoint(tan2)}")
+        //println("**** FITCUBIC ****")
+        //println(s"first: ${first} last: ${last} error: ${error.format}\ntan1: ${formatPoint(tan1)}  tan2: ${formatPoint(tan2)}")
         if last - first == 1 then
-            println("\t**** LAST - FIRST BRANCH ****")
+            //println("\t**** LAST - FIRST BRANCH ****")
             val pt1 = points(first)
             val pt2 = points(last)
             val dist = pt1.distance(pt2) / 3 //magic number?!??!
@@ -60,7 +63,7 @@ object PathSimplification {
         else
             val uPrime = chordLengthParameterize(points, first, last)
             var maxError = math.max(error, error * error)
-            println(s"\tmaxErrorSet: ${maxError.format}")
+            //println(s"\tmaxErrorSet: ${maxError.format}")
             var split: Int = 0
             var parametersInOrder = true
 
@@ -70,17 +73,17 @@ object PathSimplification {
                     var max = findMaxError(points, first, last, curve, uPrime)
     
                     if max.error < error && parametersInOrder then
-                        println("\t**** return path ****")
+                        //println("\t**** return path ****")
                         addCurve(segments, curve)
                         return
                     split = max.index
-                    println(s"split: ${split}, maxError: ${maxError.format}, max.error: ${max.error.format}")
+                    //println(s"split: ${split}, maxError: ${maxError.format}, max.error: ${max.error.format}")
                     if max.error >= maxError then break()
                     parametersInOrder = reparameterize(points, first, last, uPrime, curve)
                     maxError = max.error
-                    println(s"\tmaxError updated: ${maxError.format}")
+                    //println(s"\tmaxError updated: ${maxError.format}")
             }
-            println("\t**** TANCENTRE ****")
+            //println("\t**** TANCENTRE ****")
             val tanCenter = points(split - 1) - points(split + 1)
             fitCubic(points, segments, error, first, split, tan1, tanCenter)
             fitCubic(points, segments, error, split, last, tanCenter * -1, tan2)
@@ -89,11 +92,11 @@ object PathSimplification {
         
 
     def addCurve(segments: ArrayBuffer[Segment], curve: ArrayBuffer[Vector2]) =
-        println("**** ADDCURVE ****")
-        println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
+        //println("**** ADDCURVE ****")
+        //println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
         val prev = segments.last
         prev.handleOut = Some(curve(1) - curve(0))
-        println(s"prev.handleOut: ${formatPoint(prev.handleOut.get)}")
+        //println(s"prev.handleOut: ${formatPoint(prev.handleOut.get)}")
         segments += Segment(curve(3), Some(curve(2) - curve(3)), None)
 
     def formatPoint(p: Vector2): String = 
@@ -101,38 +104,38 @@ object PathSimplification {
         else
         s"Point(${p.x.format}, ${p.y.format})"
     def generateBezier(points: ArrayBuffer[Vector2], first: Int, last: Int, uPrime: ArrayBuffer[Double], tan1: Vector2, tan2: Vector2) =
-        println("**** GENERATEBEZIER ****")
-        println(s"first: ${first} last: ${last} \ntan1: ${formatPoint(tan1)}  tan2: ${formatPoint(tan2)} \nuPrime: [${uPrime.map(_.format).mkString(" ")}]")
-        println(s"pointslength: ${points.length}, points: [${points.map(formatPoint).mkString(" ")}]")
+        //println("**** GENERATEBEZIER ****")
+        //println(s"first: ${first} last: ${last} \ntan1: ${formatPoint(tan1)}  tan2: ${formatPoint(tan2)} \nuPrime: [${uPrime.map(_.format).mkString(" ")}]")
+        //println(s"pointslength: ${points.length}, points: [${points.map(formatPoint).mkString(" ")}]")
         val epsilon = EPSILON
         val pt1 = points(first)
         val pt2 = points(last)
-        println(s"pt1: ${formatPoint(pt1)}, pt2: ${formatPoint(pt2)}")
+        //println(s"pt1: ${formatPoint(pt1)}, pt2: ${formatPoint(pt2)}")
 
         val C = ArrayBuffer(ArrayBuffer[Double](0, 0), ArrayBuffer[Double](0, 0))
         val X = ArrayBuffer[Double](0, 0)
 
         val len = last - first + 1
         for i <- 0 until len do
-            println("\t**** BEZIER LOOP ****")
+            //println("\t**** BEZIER LOOP ****")
             val u = uPrime(i)
             val t = 1 - u
             val b = 3 * u * t
             val b0 = t * t * t
             val b1 = b * t
             val b2 = b * u
-            println(s"b3 in: u: ${u.format}")
+            //println(s"b3 in: u: ${u.format}")
             val b3 = u * u * u
-            println(s"a1 in: tan1: ${formatPoint(tan1)}, b1: ${b1.format}")
+            //println(s"a1 in: tan1: ${formatPoint(tan1)}, b1: ${b1.format}")
             val a1 = pointNormalize(tan1, b1)
-            println(s"a1 out: ${formatPoint(a1)}")
-            println(s"a2 in: tan2: ${formatPoint(tan2)}, b2: ${b2.format}")
+            //println(s"a1 out: ${formatPoint(a1)}")
+            //println(s"a2 in: tan2: ${formatPoint(tan2)}, b2: ${b2.format}")
             val a2 = pointNormalize(tan2, b2)
-            println(s"a2 out: ${formatPoint(a2)}")
-            println(s"i: ${i}, u: ${u.format}, t: ${t.format}, a1: ${formatPoint(a1)}, a2: ${formatPoint(a2)}, b: ${b.format}, b0: ${b0.format}, b1: ${b1.format}, b2: ${b2.format}, b3: ${b3.format}")
+            //println(s"a2 out: ${formatPoint(a2)}")
+            //println(s"i: ${i}, u: ${u.format}, t: ${t.format}, a1: ${formatPoint(a1)}, a2: ${formatPoint(a2)}, b: ${b.format}, b0: ${b0.format}, b1: ${b1.format}, b2: ${b2.format}, b3: ${b3.format}")
             val tmp = points(first + i) - (pt1 * (b0 + b1)) - (pt2 * (b2+b3))
-            println(s"tmp = ${formatPoint(points(first + i))} - ${formatPoint(pt1)} * ${(b0 + b1).format} - ${formatPoint(pt2)} * ${(b2 + b3).format} = ${formatPoint(tmp)}")
-            println(s"out tmp: ${formatPoint(tmp)}")
+            //println(s"tmp = ${formatPoint(points(first + i))} - ${formatPoint(pt1)} * ${(b0 + b1).format} - ${formatPoint(pt2)} * ${(b2 + b3).format} = ${formatPoint(tmp)}")
+            //println(s"out tmp: ${formatPoint(tmp)}")
             C(0)(0) += a1.dot(a1)
             C(0)(1) += a1.dot(a2)
             
@@ -141,57 +144,57 @@ object PathSimplification {
             //val tmp2 = Vector2(t * b1, u * b2)
             X(0) += a1.dot(tmp)
             X(1) += a2.dot(tmp)
-        println(s"C: [${C.map(_.map(_.format).mkString(" ")).mkString("; ")}]")
-        println(s"X: [${X.map(format).mkString(" ")}]")
+        //println(s"C: [${C.map(_.map(_.format).mkString(" ")).mkString("; ")}]")
+        //println(s"X: [${X.map(format).mkString(" ")}]")
         val detC0C1 = C(0)(0) * C(1)(1) - C(1)(0) * C(0)(1)
         var alpha1 = 0D
         var alpha2 = 0D
         if math.abs(detC0C1) > epsilon then
-            println("\t**** Kramers Rule ****")
+            //println("\t**** Kramers Rule ****")
             val detC0X = C(0)(0) * X(1)    - C(1)(0) * X(0)
             val detXC1 = X(0)    * C(1)(1) - X(1)    * C(0)(1)
 
             alpha1 = detXC1 / detC0C1
             alpha2 = detC0X / detC0C1
-            println(s"detC0C1: ${detC0C1.format} detC0X: ${detC0X.format} detXC1: ${detXC1.format}")
-            println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
+            //println(s"detC0C1: ${detC0C1.format} detC0X: ${detC0X.format} detXC1: ${detXC1.format}")
+            //println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
         else
             val c0 = C(0)(0) + C(0)(1)
             val c1 = C(1)(0) + C(1)(1)
             val alphaVal = if math.abs(c0) > epsilon then X(0) / c0 else if math.abs(c1) > epsilon then X(1) / c1 else 0
             alpha1 = alphaVal
             alpha2 = alphaVal
-            println("\t**** Not Kramer ****")
-            println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
+            //println("\t**** Not Kramer ****")
+            //println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
 
         val segLength = pt2.distance(pt1)
         val eps = epsilon * segLength
-        println(s"segLength: ${segLength.format}, eps: ${eps.format}")
+        //println(s"segLength: ${segLength.format}, eps: ${eps.format}")
         var handle1: Vector2 = null
         var handle2: Vector2 = null
 
         if alpha1 < eps || alpha2 < eps then
             alpha1 = segLength / 3D
             alpha2 = segLength / 3D
-            println("\t**** Wu/Barsky ****")
-            println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
+            //println("\t**** Wu/Barsky ****")
+            //println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
         else
             val line = pt2 - pt1
             handle1 = tan1.normalized * alpha1
             handle2 = tan2.normalized * alpha2
-            println("\t**** ELSE Wu/Barsky ****")
-            println(s"handle1: ${formatPoint(handle1)} handle2: ${formatPoint(handle2)} line: ${formatPoint(line)}")
+            //println("\t**** ELSE Wu/Barsky ****")
+            //println(s"handle1: ${formatPoint(handle1)} handle2: ${formatPoint(handle2)} line: ${formatPoint(line)}")
 
             if handle1.dot(line) - handle2.dot(line) > segLength * segLength then
                 alpha1 = segLength / 3D
                 alpha2 = segLength / 3D
                 handle1 = null
                 handle2 = null
-                println("\t\t**** ELSE Wu/Barsky 2 ****")
-                println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
-        println(s"handle1: ${formatPoint(handle1)} handle2: ${formatPoint(handle2)}")
-        println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
-        println(s"pt1: ${formatPoint(pt1)} pt2: ${formatPoint(pt2)}")
+                //println("\t\t**** ELSE Wu/Barsky 2 ****")
+                //println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
+        //println(s"handle1: ${formatPoint(handle1)} handle2: ${formatPoint(handle2)}")
+        //println(s"alpha1: ${alpha1.format} alpha2: ${alpha2.format}")
+        //println(s"pt1: ${formatPoint(pt1)} pt2: ${formatPoint(pt2)}")
         
         val out = ArrayBuffer(
             pt1,
@@ -199,7 +202,7 @@ object PathSimplification {
             pt2 + (if handle2 == null then tan2.normalized * alpha2 else handle2), 
             pt2
         )
-        println(s"bezier out: [${out.map(formatPoint).mkString(" ")}]")
+        //println(s"bezier out: [${out.map(formatPoint).mkString(" ")}]")
         out
 
 
@@ -207,8 +210,8 @@ object PathSimplification {
 
 
     def chordLengthParameterize(points: ArrayBuffer[Vector2], first: Int, last: Int): ArrayBuffer[Double] =
-        println("**** chordLengthParameterize ****")
-        println(s"first: ${first}, last: ${last}")
+        //println("**** chordLengthParameterize ****")
+        //println(s"first: ${first}, last: ${last}")
         val u = ArrayBuffer[Double]()
         u += 0.0
         for i <- first + 1 to last do
@@ -219,12 +222,12 @@ object PathSimplification {
         for i <- 1 to m do
             u(i) /= u(m)
 
-        println(s"\nout: [${u.map(_.format).mkString(" ")}]")
+        //println(s"\nout: [${u.map(_.format).mkString(" ")}]")
         u
 
     def findMaxError(points: ArrayBuffer[Vector2], first: Int, last: Int, curve: ArrayBuffer[Vector2], u: ArrayBuffer[Double]): ErrorType =
-        println("**** findMaxError ****")
-        println(s"first: ${first}, last: ${last} \ncurve: [${curve.map(formatPoint).mkString(" ")}] \nu: [${u.map(_.format).mkString(" ")}]")
+        //println("**** findMaxError ****")
+        //println(s"first: ${first}, last: ${last} \ncurve: [${curve.map(formatPoint).mkString(" ")}] \nu: [${u.map(_.format).mkString(" ")}]")
         var index: Int = (last - first + 1) / 2
         var maxDist: Double = 0
         for i <- first + 1 until last do
@@ -232,27 +235,27 @@ object PathSimplification {
             val v = P - points(i)
             val dist = v.x * v.x + v.y * v.y
             if dist >= maxDist then
-                println("\t****IF MAXERROR****")
+                //println("\t****IF MAXERROR****")
                 maxDist = dist
                 index = i
-        println(s"findMaxError out: maxDist: ${maxDist.format}, index: ${index}")
+        //println(s"findMaxError out: maxDist: ${maxDist.format}, index: ${index}")
         ErrorType(maxDist, index)
 
     def evaluate(degree: Int, curve: ArrayBuffer[Vector2], t: Double): Vector2 =
-        println("**** evaluate ****")
-        println(s"degree: ${degree.format}, t: ${t.format}")
-        println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
+        //println("**** evaluate ****")
+        //println(s"degree: ${degree.format}, t: ${t.format}")
+        //println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
         val tmp = curve.clone()
         for i <- 1 to degree do
             for j <- 0 to degree - i do
                 tmp(j) = tmp(j) * (1 - t) + tmp(j + 1) * t
         val out = tmp.head
-        println(s"evaluate out: ${formatPoint(out)}")
+        //println(s"evaluate out: ${formatPoint(out)}")
         out
 
     def reparameterize(points: ArrayBuffer[Vector2], first: Int, last: Int, u: ArrayBuffer[Double], curve: ArrayBuffer[Vector2]): Boolean =
-        println("**** REPARAMETERIZE ****")
-        println(s"first: ${first} last: ${last} \ncurve: [${curve.map(formatPoint).mkString(" ")}] \nu: [${u.map(_.format).mkString(" ")}]")
+        //println("**** REPARAMETERIZE ****")
+        //println(s"first: ${first} last: ${last} \ncurve: [${curve.map(formatPoint).mkString(" ")}] \nu: [${u.map(_.format).mkString(" ")}]")
         var out = true
         for i <- first to last do
             u.jsAssign(i - first, findRoot(curve, points(i), u(i - first))) //findRoot(curve, points(i), u(i - first))
@@ -261,14 +264,14 @@ object PathSimplification {
                 if u(i) <= u(i - 1) then
                     out = false
         }
-        println(s"out: ${out}")
+        //println(s"out: ${out}")
         out
 
 
     def findRoot(curve: ArrayBuffer[Vector2], point: Vector2, u: Double): Double =
-        println("**** FIND ROOT ****")
-        println(s"point: ${formatPoint(point)} u: ${u.format}")
-        println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
+        //println("**** FIND ROOT ****")
+        //println(s"point: ${formatPoint(point)} u: ${u.format}")
+        //println(s"curve: [${curve.map(formatPoint).mkString(" ")}]")
         val curve1 = ArrayBuffer[Vector2]()
         val curve2 = ArrayBuffer[Vector2]()
 
@@ -285,7 +288,7 @@ object PathSimplification {
         val df = pt1.dot(pt1) + diff.dot(pt2)
 
         val out = if isMachineZero(df) then u else u - diff.dot(pt1) / df
-        println(s"findRoot out: ${out.format}")
+        //println(s"findRoot out: ${out.format}")
         out
 
 

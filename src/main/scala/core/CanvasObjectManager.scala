@@ -43,7 +43,7 @@ class ClampedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], ini
                     case Some(handler) => canvasObject.accept(handler)
                     case None => None
         }
-        if input(VK_SHIFT) then println(getActive.size)
+        //if input(VK_SHIFT) then println(getActive.size)
 
         getActive.map(_.tick(input))
     def getActive: Vector[CanvasObject] = tempStore ++ queried

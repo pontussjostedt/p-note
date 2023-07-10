@@ -16,6 +16,6 @@ case class FPSMeassure(collectionPeriod: Long):
     def tick(): Unit = 
         frameCount += 1
         if timer.isOverReset then
-            //println(s"FPS = ${1000*frameCount/collectionPeriod.toDouble}")
+            println(s"FPS = ${1000*frameCount/collectionPeriod.toDouble}")
             frameCount = 0
 
