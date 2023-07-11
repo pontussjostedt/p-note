@@ -1,5 +1,5 @@
 scalaVersion := "3.3.0"
-javaOptions += "-Xmx8g"
+
 libraryDependencies ++= Seq(
   //"org.apache.pdfbox" % "pdfbox" % "2.0.27",
   "org.scalatest" %% "scalatest" % "3.2.9" % Test,
@@ -12,6 +12,6 @@ libraryDependencies ++= Seq(
   "org.openjfx" % "javafx-swing" % "20.0.1"
 )
 
-fork in run := true
+//fork in run := true
 
-javaOptions in run += "-agentlib:hprof=heap=sites"
+//javaOptions in run += "-agentlib:hprof=heap=sites"

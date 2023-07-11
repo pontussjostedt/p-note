@@ -17,5 +17,5 @@ class DefaultToolState(geometryStore: CanvasObjectManager) extends CanvasState:
         geometryStore.storeTemp(currentTool.get)
         geometryStore.tick(windowInfo)
         currentTool.foreach(_.tick(windowInfo))
-    def draw(g2d: Graphics2D): Unit = 
-        geometryStore.draw(g2d)
+    def draw(g2d: Graphics2D, inputInfo: WindowInfo): Unit = 
+        geometryStore.draw(g2d, inputInfo)

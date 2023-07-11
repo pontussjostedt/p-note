@@ -65,6 +65,8 @@ class BufferedCanvas(var canvasSize: Vector2) extends Canvas:
         selfReference.setBounds(component.getBounds())
     }
     private val backgroundColor = java.awt.Color.WHITE
+    private val clocker = CodeClocker(Timer(500), 10)
+    
     def render(drawAbsolute: Graphics2D => Unit, drawFromCamera: Graphics2D => Unit, camera: Camera): Unit = 
         import java.awt.Color
         var bs = getBufferStrategy
@@ -73,18 +75,18 @@ class BufferedCanvas(var canvasSize: Vector2) extends Canvas:
         bs = getBufferStrategy
         }
         val g2d = bs.getDrawGraphics().asInstanceOf[Graphics2D]
+        /*
         g2d.setRenderingHint(
             java.awt.RenderingHints.KEY_ANTIALIASING,
             java.awt.RenderingHints.VALUE_ANTIALIAS_ON
         )
+        */
         g2d.setColor(backgroundColor)
         g2d.fillRect(Vector2.zero, canvasSize)
+        g2d.setColor(Color.BLACK)
         drawAbsolute(g2d)
         g2d.setTransform(camera.transform)
-        g2d.setColor(Color.RED)
-        //g2d.drawPoint(Vector2(0, 0), 30)
-        g2d.setColor(Color.BLACK)
-        drawFromCamera(g2d) //RITAR ALLT
+        drawFromCamera(g2d)
         bs.show()
         g2d.dispose()
 

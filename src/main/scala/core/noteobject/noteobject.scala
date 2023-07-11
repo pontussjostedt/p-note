@@ -9,7 +9,7 @@ trait NoteObject:
     val reactive: Boolean = false
 trait CanvasObject extends NoteObject:
     def shape: Shape
-    def draw(g2d: Graphics2D): Unit
+    def draw(g2d: Graphics2D, input: WindowInfo): Unit
 
 sealed trait VisitorContext
 case class VisitorHandler(toRemove: Vector[CanvasObject], windowInfo: WindowInfo, geometryStore: CanvasObjectManager, extraInfo: VisitorContext*)

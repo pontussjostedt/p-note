@@ -12,7 +12,7 @@ trait CanvasObjectManager:
     def getCamera: Camera
 
     def tick(input: WindowInfo): Unit
-    def draw(g2d: java.awt.Graphics2D): Unit
+    def draw(g2d: java.awt.Graphics2D, inputInfo: WindowInfo): Unit
 
     def offer(canvasObject: CanvasObject): Unit
     def storeTemp(canvasObject: CanvasObject): Unit
@@ -25,8 +25,8 @@ class ClampedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], ini
     private var activeCamera: Camera = initalCamera 
 
     def getCamera: Camera = activeCamera
-    def draw(g2d: Graphics2D): Unit = 
-        getActive.foreach(_.draw(g2d))
+    def draw(g2d: Graphics2D, inputInfo: WindowInfo): Unit = 
+        getActive.foreach(_.draw(g2d, inputInfo))
         tempStore = tempStore.empty
     def offer(canvasObject: CanvasObject): Unit = 
         canvasObjects += canvasObject
