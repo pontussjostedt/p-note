@@ -11,6 +11,11 @@ import java.awt.geom.Path2D
 import java.awt.geom.PathIterator
 import scala.collection.mutable.ArrayBuffer
 import java.awt.Component
+import java.awt.image.BufferedImage
+import java.io.File
+import javax.imageio.ImageIO
+import java.awt.Color
+import java.awt.Rectangle
 
 type Vector2 = Point2D.Double
 object Vector2:
@@ -172,15 +177,68 @@ extension (g2d: Graphics2D)
 
     def fillRect(p1: Vector2, size: Vector2): Unit =
         g2d.fillRect(p1.x, p1.y, size.x, size.y)
+
+    def drawRect(p1: Vector2, size: Vector2): Unit = 
+        g2d.drawRect(p1.x, p1.y, size.x, size.y)
+
+    def drawString(text: String, p1: Vector2): Unit =
+        g2d.drawString(text, p1.x, p1.y)
 extension (shape: Shape)
     def contains(inner: Shape): Boolean =
-        shape.contains(inner.getBounds()) && {
+        println(s"outerBounds = ${shape.getBounds()}")
+        println(s"innerBounds = ${inner.getBounds()}")
+        println(s"outer.contains(inner) = ${shape.getBounds().contains(inner.getBounds())}")
+        {shape.getBounds().contains(inner.getBounds())} && {{
             val selfArea = Area(shape)
             val innerArea = Area(inner)
             selfArea.intersect(innerArea)
             innerArea.contains(selfArea.getBounds2D())
-        }
+        } || tryContains(shape, inner)}
 
+val clocker = CodeClocker()
+def tryContains(outer: Shape, inner: Shape): Boolean =
+    val bounds = outer.getBounds()
+    val innerBounds = inner.getBounds()
+    val upperPointInImageInner = innerBounds.getMin() - bounds.getMin()
+    val image = BufferedImage(innerBounds.getWidth(), innerBounds.getHeight(), BufferedImage.TYPE_INT_ARGB)
+    val g2d = image.createGraphics()
+    g2d.translate(-innerBounds.x, -innerBounds.y)
+    g2d.setColor(Color.WHITE)
+    g2d.fillRect(innerBounds.x, innerBounds.y, innerBounds.width, innerBounds.height)
+    g2d.setColor(Color.BLACK)
+    g2d.fill(outer)
+    //g2d.setColor(Color.BLUE)
+    //g2d.draw(outer)
+    //val outerFile = new File("outer.png")
+    //ImageIO.write(image, "png", outerFile)
+    val outerPoints = image.getNoneZeroIndices()
+    //val overlayedFile = new File("overlayed.png")
+    //g2d.setColor(Color.RED)
+    //g2d.draw(inner)
+    //ImageIO.write(image, "png", overlayedFile)
+    g2d.setColor(Color.WHITE)
+    g2d.fillRect(innerBounds.x, innerBounds.y, innerBounds.width, innerBounds.height)
+    g2d.setColor(Color.BLACK)
+    g2d.draw(inner)
+    val innerPoints = image.getNoneZeroIndices()
+    g2d.dispose()
+    //val outputfile = new File("inner.png")
+    //ImageIO.write(image, "png", outputfile)
+    innerPoints.forall(outerPoints.contains)
+    
+extension (image: BufferedImage)
+    def getNoneZeroPoints(): Vector[Vector2] =
+        (for x <- 0 until image.getWidth(); y <- 0 until image.getHeight() if {image.getRGB(x, y) & 0x00ffffff} == 0x00000000 yield {Vector2(x, y)}).toVector
+
+    def getNoneZeroIndices(): Vector[Int] =
+        image
+            .getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth())
+            .zipWithIndex
+            .filter((c, i) => {(c & 0x00ffffff)} == 0x00000000)
+            .map(_._2)
+            .toVector
+    //def getNoneZeroIndices(topLeftPoint: Vector2, size: Vector2): Vector[Int] =
+    //    (for (color, i) <- image.getRGB(topLeftPoint.x, topLeftPoint.y, size.x, size.y, null, 0, size.x).zipWithIndex if (color & 0x00ffffff) != 0x00000000 yield i).toVector
 
 extension (path: Path2D)
     def moveTo(vec: Vector2): Unit =
@@ -193,8 +251,18 @@ extension (rect: Rectangle2D)
     def pad(padding: Double): Rectangle2D =
         Rectangle2D.Double(rect.getMinX() + padding, rect.getMinY() + padding, rect.getWidth() - padding, rect.getHeight() - padding)
    
+    //def getMax(): Vector2 =
+    //    Vector2(rect.getMaxX(), rect.getMaxY())
+
+    //def getMin(): Vector2 =
+    //    Vector2(rect.getMinX(), rect.getMinY())
+
+extension (rect: Rectangle)
     def getMax(): Vector2 =
         Vector2(rect.getMaxX(), rect.getMaxY())
+
+    def getMin(): Vector2 =
+        Vector2(rect.getMinX(), rect.getMinY())
 
 
 extension (component: Component)

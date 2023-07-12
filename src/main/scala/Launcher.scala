@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent.*
 import scala.collection.mutable.ArrayBuffer
 import java.awt.Shape
 import core.noteobject.CanvasPath
-import core.noteobject.ImageCacheDecorator
+import java.awt.geom.Path2D
 object Launcher:
     @main
     def run(): Unit = 
@@ -25,18 +25,13 @@ object Launcher:
         //window.add(ComponentHandler(WebBrowser("https://mozilla.github.io/pdf.js/web/viewer.html?file=file:///C:/Users/Pontu/OneDrive/Dokument/Funk.pdf"), Rectangle(100, 100, 800, 1200)))
         //window.add(ComponentHandler(PDFViewer("C:/Users/Pontu/OneDrive/Dokument/Funk.pdf"), Rectangle(100, 100, 800, 1200)))
         println("Starting loop")
-        var currentState: CanvasState = DefaultToolState(ClampedCanvasObjectManager(SpatialHash[CanvasObject](25, _.shape), camera))
+        var currentState: CanvasState = DefaultToolState(ClampedCanvasObjectManager(SpatialHash[CanvasObject](100, _.shape), camera))
         
-        val tan1 = Vector2(-163, -166)
-
         while !core.Timer(3000, startOnCd = true).isOver do
             val windowInfo = window.inputManager.getInputInfo(camera)
             window.inputManager.reset()
             currentState.tick(windowInfo)
-            window.canvas.render(g2d => (), {g2d => if !windowInfo(VK_SHIFT, VK_CONTROL) then g2d.setRenderingHint(
-            java.awt.RenderingHints.KEY_ANTIALIASING,
-            java.awt.RenderingHints.VALUE_ANTIALIAS_ON
-            ); currentState.draw(g2d, windowInfo)}, camera)
+            window.canvas.render(g2d => (), {g2d => currentState.draw(g2d, windowInfo)}, camera)
             //window.canvas.render(g2d => (), draw, camera)
             window.updateCamera(camera)
             camera.debugMove(windowInfo, 700)

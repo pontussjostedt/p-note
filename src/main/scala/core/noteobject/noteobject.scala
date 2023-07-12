@@ -8,6 +8,7 @@ trait NoteObject:
     def accept(handler: VisitorHandler): Option[VisitorHandler]
     val reactive: Boolean = false
 trait CanvasObject extends NoteObject:
+    def isSafeToCacheInImage: Boolean = false
     def shape: Shape
     def draw(g2d: Graphics2D, input: WindowInfo): Unit
 

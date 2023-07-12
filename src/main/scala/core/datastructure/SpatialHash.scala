@@ -34,13 +34,17 @@ case class SpatialHash[A](gridSize: Int, getShape: A => Shape) extends GeometryS
         for x <- minX to maxX; y <- minY to maxX do
             underlying.get((x, y)).foreach(optVec => f(optVec.filter(filter)))
 
-    override def queryContains(selector: Shape): Seq[A] = ???
+    override def queryContains(selector: Shape): Seq[A] = 
+        val out = mutable.Set.empty[A]
+        forZone(selector.getBounds2D())(out ++= _)
+        out.filter(elem => selector.contains(getShape(elem))).toSeq
 
     override def clear(): Unit = underlying.clear()
 
     override def addOne(elem: A): this.type = 
         val ((minX, minY), (maxX, maxY)) = getCorners(getShape(elem).getBounds2D())
         for x <- minX to maxX; y <- minY to maxY do
+            println(s"Adding $elem to $x, $y")
             pushToGridZone((x, y), elem)
         this
 
@@ -75,7 +79,11 @@ case class SpatialHash[A](gridSize: Int, getShape: A => Shape) extends GeometryS
         ((hash(rec.getMinX()), hash(rec.getMinY())), (hash(rec.getMaxX()), hash(rec.getMaxY())))
 
     override def draw(g2d: Graphics2D): Unit = 
-        ???
+        g2d.setColor(java.awt.Color.RED)
+        underlying.foreach { (k, v) =>
+            g2d.drawRect(Vector2.fromIntTuple(k) * gridSize, Vector2(gridSize, gridSize))
+            g2d.drawString(s"NumContent: ${v.length}", Vector2.fromIntTuple(k) * gridSize)
+        }
 
 object SpatialHash:
     def apply[A](gridSize: Int, getShape: A => Shape, elements: A*)(): SpatialHash[A] = 

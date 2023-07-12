@@ -21,17 +21,22 @@ case class FPSMeassure(collectionPeriod: Long):
 
 
 
-class CodeClocker(timer: Timer, minSammpleSize: Int):
-    var times = Vector.empty[Long]
-    def offer(block: () => Unit): Unit = 
+class CodeClocker:
+    def offer(block: () => Unit): Long = 
         val start = System.nanoTime()
         block()
         val end = System.nanoTime()
-        times :+= end - start
-        if timer.isOverReset && times.length > minSammpleSize then
-            //println(times.reverse.take(minSammpleSize).mkString(","))
-            val avgTime = times.reverse.take(minSammpleSize).sum/(minSammpleSize * 1e6D)
-            println(s"Code block took ${avgTime}ms to execute           (fps: ${1000/avgTime})")
+        end - start
+
+    def offerThenPassThrough[A](block: () => A): A = 
+        val start = System.nanoTime()
+        val out = block()
+        val end = System.nanoTime()
+        println(s"Time taken: ${CodeClocker.nanoToMs(end - start)}ms")
+        out
+
+object CodeClocker:
+    def nanoToMs(nano: Long): Double = nano * 1e-6D
 
 class MultiClocker:
     def offer(n: Int)(block: () => Unit): Long = 

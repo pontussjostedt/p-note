@@ -12,7 +12,8 @@ import java.awt.image.BufferedImage
 import java.awt.Color
 import java.awt.event.KeyEvent.*
 
-class CanvasPath(path2D: Path2D.Double) extends CanvasObject:
+class CanvasPath(private val path2D: Path2D.Double) extends CanvasObject:
+    override def isSafeToCacheInImage: Boolean = true
     def getPathIteratorString: String =
         val pathIterator = path2D.getPathIterator(null)
         val buffer = new StringBuffer()
