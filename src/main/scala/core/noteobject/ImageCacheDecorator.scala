@@ -11,7 +11,7 @@ import core.ImageCacheDecorator.objectsToImage
 class ImageCacheDecorator(canvasObject: CanvasObject, color: Color) extends CanvasObject:
     override val reactive: Boolean = canvasObject.reactive
     override def tick(input: WindowInfo): Unit = canvasObject.tick(input)
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] = canvasObject.accept(handler)
+    override def accept(handler: VisitorHandler): VisitorHandler = canvasObject.accept(handler)
     override def shape: Shape = canvasObject.shape
 
     lazy val imageWithCoordinates = ImageCacheDecorator.shapeToImage(shape, color)
@@ -31,7 +31,7 @@ class MultiImageCacheDecorator(canvasObjects: Vector[CanvasObject], color: Color
     assert(canvasObjects.forall(_.isSafeToCacheInImage), "You cannot cache an object that is not safe to cache")
     override val reactive: Boolean = false
     override def tick(input: WindowInfo): Unit = canvasObjects.foreach(_.tick(input))
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] = throw Exception("You are not meant to call me")
+    override def accept(handler: VisitorHandler): VisitorHandler = throw Exception("You are not meant to call me")
     override def shape: Shape = throw Exception("You are not meant to call me")
 
 

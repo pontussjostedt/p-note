@@ -12,26 +12,30 @@ class LineSelector extends CanvasObject:
     private var path: Option[Path2D.Double] = None
     private var locked: Boolean = false
     override val reactive: Boolean = true
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] = 
-        if handler.windowInfo(LeftMouse) then
-            if path.isDefined then
-                path.foreach(_.lineTo(handler.windowInfo.canvasMousePosition))
-                println(s"LINE TO ${handler.windowInfo.canvasMousePosition}")
-            else if !locked then
-                path = Some(Path2D.Double())
-                path.foreach(_.moveTo(handler.windowInfo.canvasMousePosition))
-                println(s"MOVE TO ${handler.windowInfo.canvasMousePosition}")
-            None
-        else if path.isDefined then
-            locked = true
-            path.foreach(_.closePath())
-            val selected = handler.geometryStore.getStore.queryContains(path.get)
-            path = None
-            println(s"Selected: ${selected.mkString("\n")}")
-            None
+    override def accept(handler: VisitorHandler): VisitorHandler = 
+        if handler.stopReason.isEmpty then
+            if handler.windowInfo(LeftMouse) then
+                if path.isDefined then
+                    path.foreach(_.lineTo(handler.windowInfo.canvasMousePosition))
+                else if !locked then
+                    path = Some(Path2D.Double())
+                    path.foreach(_.moveTo(handler.windowInfo.canvasMousePosition))
+                handler.copy(stopReason = Some(InputConsumed))
+            else if path.isDefined then
+                locked = true
+                path.foreach(_.closePath())
+                val selected = handler.objectManager.getStore.queryContains(path.get)
+                path = None
+                val out = handler
+                    .stopped(InputConsumed)
+                    .addedAction(SwapTool(Resize(selected.toVector, LineDrawingTool(), 30)))
+                println(s"outHandler:      actions: ${out.actions}, stopped: ${out.stopReason}")
+                out
+            else
+                locked = false
+                handler
         else
-            locked = false
-            Some(handler)
+            handler
         
     override def tick(input: WindowInfo): Unit = ()
 

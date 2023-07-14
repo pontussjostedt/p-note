@@ -13,7 +13,6 @@ class DefaultToolState(geometryStore: CanvasObjectManager) extends CanvasState:
     //geometryStore.offer(AsyncCanvasObject(() => {Thread.sleep(1000); CanvasShape(Rectangle(0, 0, 100, 300))}, CanvasShape(Rectangle(0, 0, 1000, 1000))))
     setTool(LineDrawingTool())
     def setTool(tool: CanvasObject): Unit = 
-        println(s"Setting tool to $tool")
         currentTool = Some(tool)
     def tick(windowInfo: WindowInfo): Unit = 
         if windowInfo(VK_SHIFT, VK_L) then setTool(LineDrawingTool())
@@ -21,5 +20,14 @@ class DefaultToolState(geometryStore: CanvasObjectManager) extends CanvasState:
         geometryStore.storeTemp(currentTool.get)
         geometryStore.tick(windowInfo)
         currentTool.foreach(_.tick(windowInfo))
+        val foldResult = geometryStore.fold(windowInfo)
+        //println(s"Fold result: ${foldResult.stopReason}, ${foldResult.actions}")
+
+        println("********** NEW FOLD *********")
+        foldResult.actions.foreach {
+            case SwapTool(tool) => setTool(tool)
+            case Debug => throw Exception("DEBUG")
+        }
+        
     def draw(g2d: Graphics2D, inputInfo: WindowInfo): Unit = 
         geometryStore.draw(g2d, inputInfo)

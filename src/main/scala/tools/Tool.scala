@@ -15,7 +15,7 @@ class LineDrawingTool extends CanvasObject {
     override val reactive: Boolean = true
 
     override def tick(input: WindowInfo): Unit = ()    
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] =
+    override def accept(handler: VisitorHandler): VisitorHandler =
         val mousePos = handler.windowInfo.canvasMousePosition
         if handler.windowInfo(LeftMouse) then 
             if path.isDefined then 
@@ -24,18 +24,19 @@ class LineDrawingTool extends CanvasObject {
             else
                 path = Some(Path2D.Double())
                 path.foreach(_.moveTo(mousePos))
-            None
+            handler
+                .stopped(InputConsumed)
         else if !handler.windowInfo(LeftMouse) && path.isDefined then
-            handler.geometryStore.offer(CanvasPath.cacheIfNeeded(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 10), java.awt.Color.BLACK))
+            handler.objectManager.offer(CanvasShape(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 10).toPath4()))
             path = None
-            None
+            handler
+                .stopped(InputConsumed)
         else
-            Some(handler) 
+            handler 
     
     private val dummyShape = Path2D.Double()
     override def shape: Shape = path.getOrElse(dummyShape) 
     override def draw(g2d: Graphics2D, input: WindowInfo): Unit = 
-        //g2d.setStroke(BasicStroke(4))
         g2d.draw(shape)
 
 }

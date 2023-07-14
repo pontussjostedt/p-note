@@ -18,6 +18,8 @@ trait CanvasObjectManager:
 
     def getStore: GeometryStore[CanvasObject]
 
+    def fold(windowInfo: WindowInfo): VisitorHandler
+
 class ClampedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], initalCamera: Camera) extends CanvasObjectManager {
     private var queried: Vector[CanvasObject] = Vector.empty
     private var tempStore: Vector[CanvasObject] = Vector.empty
@@ -28,7 +30,7 @@ class ClampedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], ini
     def getCamera: Camera = activeCamera
     def draw(g2d: Graphics2D, inputInfo: WindowInfo): Unit = 
         getActive.foreach(_.draw(g2d, inputInfo))
-        canvasObjects.draw(g2d)
+        //canvasObjects.draw(g2d)
         tempStore = tempStore.empty
     def offer(canvasObject: CanvasObject): Unit = 
         canvasObjects += canvasObject
@@ -39,15 +41,13 @@ class ClampedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], ini
             lastQueriedRectangle = Some(bounds)
             queried = canvasObjects.queryClippingRect(bounds).toVector
         queried = canvasObjects.queryClippingRect(bounds).toVector
-        getActive.filter(_.reactive).foldLeft[Option[VisitorHandler]](Some(VisitorHandler(Vector.empty[CanvasObject], input, this))){
-            (handler, canvasObject) => 
-                handler match
-                    case Some(handler) => canvasObject.accept(handler)
-                    case None => None
-        }
         //if input(VK_SHIFT) then println(getActive.size)
-
         getActive.map(_.tick(input))
+        
+    def fold(input: WindowInfo): VisitorHandler = 
+        getActive.filter(_.reactive).foldLeft[VisitorHandler](VisitorHandler(input, this, Vector.empty, Vector.empty, None)){
+            (handler, canvasObject) => {canvasObject.accept(handler)}
+        }
     def getActive: Vector[CanvasObject] = tempStore ++ queried
     def storeTemp(canvasObject: CanvasObject): Unit =
         tempStore :+= canvasObject

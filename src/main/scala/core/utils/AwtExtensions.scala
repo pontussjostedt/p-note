@@ -16,6 +16,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import java.awt.Color
 import java.awt.Rectangle
+import java.awt.geom.Ellipse2D
 
 type Vector2 = Point2D.Double
 object Vector2:
@@ -127,6 +128,12 @@ extension (affine: AffineTransform)
         val out = Vector2.zero
         affine.inverseTransform(vec, out)
         out
+
+    def scaleAround(scale: Vector2, anchor: Vector2): Unit =
+        affine.scale(scale.x, scale.y)
+        affine.translate(anchor.x * (1 - scale.x), anchor.y * (1 - scale.y))
+        //transform.scale(scale, scale)
+        //transform.translate(centerPoint(windowSize) * (1 - scale))
 
     def rotate(rotation: Double, vec: Vector2): Unit =
         affine.rotate(rotation, vec.x, vec.y)
@@ -263,6 +270,57 @@ extension (rect: Rectangle)
 
     def getMin(): Vector2 =
         Vector2(rect.getMinX(), rect.getMinY())
+
+    def getUpperLeft(): Vector2 = Vector2(rect.getMinX(), rect.getMinY())
+
+    def getUpperRight(): Vector2 = Vector2(rect.getMaxX(), rect.getMinY())
+
+    def getLowerLeft(): Vector2 = Vector2(rect.getMinX(), rect.getMaxY())
+
+    def getLowerRight(): Vector2 = Vector2(rect.getMaxX(), rect.getMaxY())
+
+    def cornerMoved(corner: RectangleCorner, vec: Vector2): Rectangle =
+        corner match
+            case UpperLeft => Rectangle(vec.x, vec.y, rect.width + (rect.x - vec.x), rect.height + (rect.y - vec.y))
+            case UpperRight => Rectangle(rect.x, vec.y, (vec.x - rect.x), rect.height + (rect.y - vec.y))
+            case LowerLeft => Rectangle(vec.x, rect.y, rect.width + (rect.x - vec.x), (vec.y - rect.y))
+            case LowerRight => Rectangle(rect.x, rect.y, (vec.x - rect.x), (vec.y - rect.y))
+
+    def getCorner(corner: RectangleCorner): Vector2 =
+        corner match
+            case UpperLeft => getUpperLeft()
+            case UpperRight => getUpperRight()
+            case LowerLeft => getLowerLeft()
+            case LowerRight => getLowerRight()
+
+    def getSize: Vector2 =
+        Vector2(rect.getWidth(), rect.getHeight())
+
+    def getCenter: Vector2 =
+        Vector2(rect.getCenterX(), rect.getCenterY())
+
+extension (rect2D: Rectangle2D)
+    def getUpperLeft(): Vector2 = Vector2(rect2D.getMinX(), rect2D.getMinY())
+
+    def getUpperRight(): Vector2 = Vector2(rect2D.getMaxX(), rect2D.getMinY())
+
+    def getLowerLeft(): Vector2 = Vector2(rect2D.getMinX(), rect2D.getMaxY())
+
+    def getLowerRight(): Vector2 = Vector2(rect2D.getMaxX(), rect2D.getMaxY())
+
+sealed trait RectangleCorner
+case object UpperLeft extends RectangleCorner
+case object UpperRight extends RectangleCorner
+case object LowerLeft extends RectangleCorner
+case object LowerRight extends RectangleCorner
+
+extension (ellipse2D: Ellipse2D)
+    def getCenter(): Vector2 =
+        Vector2(ellipse2D.getCenterX(), ellipse2D.getCenterY())
+
+object EllipseFactory:
+    def asCircle(center: Vector2, radius: Double): Ellipse2D =
+        java.awt.geom.Ellipse2D.Double(center.x - radius, center.y - radius, radius*2, radius*2)
 
 
 extension (component: Component)

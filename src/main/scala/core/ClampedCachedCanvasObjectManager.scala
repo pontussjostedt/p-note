@@ -29,16 +29,12 @@ class ClampedCachedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject
             lastQueriedRectangle = Some(bounds)
             queried = canvasObjects.queryClippingRect(bounds).toVector
             toDraw = generateDraws(queried)
-        //queried = canvasObjects.queryClippingRect(bounds).toVector
-        getActive.filter(_.reactive).foldLeft[Option[VisitorHandler]](Some(VisitorHandler(Vector.empty[CanvasObject], input, this))){
-            (handler, canvasObject) => 
-                handler match
-                    case Some(handler) => canvasObject.accept(handler)
-                    case None => None
-        }
-        //if input(VK_SHIFT) then println(getActive.size)
-
         getActive.map(_.tick(input))
+
+    def fold(input: WindowInfo): VisitorHandler = 
+        getActive.filter(_.reactive).foldLeft[VisitorHandler](VisitorHandler(input, this, Vector.empty, Vector.empty, None)){
+            (handler, canvasObject) => canvasObject.accept(handler)
+        }
     def getActive: Vector[CanvasObject] = tempStore ++ queried
     private def generateDraws(canvasObjects: Vector[CanvasObject]): Vector[CanvasObject] = 
         val (safe, unsafe) = canvasObjects.partition(_.isSafeToCacheInImage)

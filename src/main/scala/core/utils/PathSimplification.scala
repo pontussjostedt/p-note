@@ -183,7 +183,7 @@ object PathSimplification {
             handle1 = tan1.normalized * alpha1
             handle2 = tan2.normalized * alpha2
             //println("\t**** ELSE Wu/Barsky ****")
-            //println(s"handle1: ${formatPoint(handle1)} handle2: ${formatPoint(handle2)} line: ${formatPoint(line)}")
+            //println(s"handle1: ${formatPoint(handle1)} handle2: ${fohttps://docs.manim.community/en/stable/examples.htmlrmatPoint(handle2)} line: ${formatPoint(line)}")
 
             if handle1.dot(line) - handle2.dot(line) > segLength * segLength then
                 alpha1 = segLength / 3D

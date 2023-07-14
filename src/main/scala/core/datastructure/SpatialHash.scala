@@ -42,13 +42,17 @@ case class SpatialHash[A](gridSize: Int, getShape: A => Shape) extends GeometryS
     override def clear(): Unit = underlying.clear()
 
     override def addOne(elem: A): this.type = 
+        println(s"Adding one $elem")
         val ((minX, minY), (maxX, maxY)) = getCorners(getShape(elem).getBounds2D())
         for x <- minX to maxX; y <- minY to maxY do
-            println(s"Adding $elem to $x, $y")
+            //println(s"Adding $elem to $x, $y")
             pushToGridZone((x, y), elem)
         this
 
+    
+
     override def subtractOne(elem: A): this.type = 
+        println(s"Removing one $elem")
         val ((minX, minY), (maxX, maxY)) = getCorners(getShape(elem).getBounds2D())
         for x <- minX to maxX; y <- minY to maxY do
             removeFromGridZone((x, y), elem)

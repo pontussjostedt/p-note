@@ -28,7 +28,7 @@ class CanvasPath(private val path2D: Path2D.Double) extends CanvasObject:
         buffer.toString()
 
     override def tick(input: WindowInfo): Unit = ()
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] = Some(handler)  
+    override def accept(handler: VisitorHandler): VisitorHandler = handler
     override val shape: Shape = path2D
     override def draw(g2d: Graphics2D, input: WindowInfo): Unit =
         g2d.draw(shape)

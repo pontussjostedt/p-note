@@ -28,7 +28,7 @@ case class AsyncCanvasObject(target: () =>  CanvasObject, private var placeholde
         current.draw(g2d, inputInfo)
     override def tick(input: WindowInfo): Unit = 
         current.tick(input)
-    override def accept(handler: VisitorHandler): Option[VisitorHandler] = 
+    override def accept(handler: VisitorHandler): VisitorHandler = 
         current.accept(handler)   
     override def shape: Shape = 
         current.shape
