@@ -12,6 +12,7 @@ class LineSelector extends CanvasObject:
     private var path: Option[Path2D.Double] = None
     private var locked: Boolean = false
     override val reactive: Boolean = true
+    override val accepting: Boolean = true
     override def accept(handler: VisitorHandler): VisitorHandler = 
         if handler.stopReason.isEmpty then
             if handler.windowInfo(LeftMouse) then
@@ -24,12 +25,12 @@ class LineSelector extends CanvasObject:
             else if path.isDefined then
                 locked = true
                 path.foreach(_.closePath())
-                val selected = handler.objectManager.getStore.queryContains(path.get)
+                val selected = handler.objectManager.getStore.queryContains(path.get).filter(_.selectable)
                 path = None
                 val out = handler
                     .stopped(InputConsumed)
                     .addedAction(SwapTool(Resize(selected.toVector, LineDrawingTool(), 30)))
-                println(s"outHandler:      actions: ${out.actions}, stopped: ${out.stopReason}")
+                //println(s"outHandler:      actions: ${out.actions}, stopped: ${out.stopReason}")
                 out
             else
                 locked = false

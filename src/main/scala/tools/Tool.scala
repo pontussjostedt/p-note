@@ -5,7 +5,6 @@ import java.awt.Graphics2D
 import java.awt.Shape
 import window.*
 import java.awt.geom.Path2D
-import core.noteobject.CanvasPath
 import java.awt.Stroke
 import java.awt.BasicStroke
 
@@ -13,6 +12,7 @@ class LineDrawingTool extends CanvasObject {
     val timer = Timer(0)
     private var path: Option[Path2D.Double] = None
     override val reactive: Boolean = true
+    override val accepting: Boolean = true
 
     override def tick(input: WindowInfo): Unit = ()    
     override def accept(handler: VisitorHandler): VisitorHandler =
@@ -27,7 +27,7 @@ class LineDrawingTool extends CanvasObject {
             handler
                 .stopped(InputConsumed)
         else if !handler.windowInfo(LeftMouse) && path.isDefined then
-            handler.objectManager.offer(CanvasShape(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 10).toPath4()))
+            handler.objectManager.offer(CanvasShape(PathSimplification.fit(path.get.toPointArrayBuffer(), false, 10).toPath4()), handler.windowInfo)
             path = None
             handler
                 .stopped(InputConsumed)

@@ -6,7 +6,7 @@ import scala.collection.generic.{Growable, Shrinkable}
  import scala.collection.mutable.Shrinkable
 import java.awt.geom.Rectangle2D
 
-trait GeometryStore[A] extends Growable[A], Shrinkable[A]:
+trait GeometryStore[A] extends Growable[A], Shrinkable[A], Serializable:
     def queryContains(selector: Shape): Seq[A]
     def draw(g2d: Graphics2D): Unit
     def queryClippingRect(viewArea: Rectangle2D): Seq[A]

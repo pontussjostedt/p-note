@@ -12,7 +12,6 @@ import state.CanvasState
 import java.awt.event.KeyEvent.*
 import scala.collection.mutable.ArrayBuffer
 import java.awt.Shape
-import core.noteobject.CanvasPath
 import java.awt.geom.Path2D
 object Launcher:
     @main
@@ -25,7 +24,7 @@ object Launcher:
         //window.add(ComponentHandler(WebBrowser("https://mozilla.github.io/pdf.js/web/viewer.html?file=file:///C:/Users/Pontu/OneDrive/Dokument/Funk.pdf"), Rectangle(100, 100, 800, 1200)))
         //window.add(ComponentHandler(PDFViewer("C:/Users/Pontu/OneDrive/Dokument/Funk.pdf"), Rectangle(100, 100, 800, 1200)))
         println("Starting loop")
-        var currentState: CanvasState = DefaultToolState(ClampedCanvasObjectManager(SpatialHash[CanvasObject](100, _.shape), camera))
+        var currentState: CanvasState = DefaultToolState(ClampedCanvasObjectManager(SpatialHash[CanvasObject](100, _.shape), camera, window))
         val path = new Path2D.Double()
         val start = Vector2(100, 100)
         path.moveTo(start)

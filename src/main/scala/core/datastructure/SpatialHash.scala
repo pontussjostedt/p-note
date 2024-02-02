@@ -18,7 +18,7 @@ case class SpatialHash[A](gridSize: Int, getShape: A => Shape) extends GeometryS
 
     override def queryClippingShape(selector: Shape): Seq[A] =
         val out = mutable.Set.empty[A]
-        forZoneFilter(selector.getBounds2D())(elem => selector.contains(getShape(elem)), out ++= _)
+        forZoneFilter(selector.getBounds2D())(elem => selector.intersects(getShape(elem)), out ++= _)
         out.toSeq
 
     def forZone(rect: Rectangle2D)(f: (Vector[A]) => Unit): Unit =
@@ -42,18 +42,19 @@ case class SpatialHash[A](gridSize: Int, getShape: A => Shape) extends GeometryS
     override def clear(): Unit = underlying.clear()
 
     override def addOne(elem: A): this.type = 
-        println(s"Adding one $elem")
         val ((minX, minY), (maxX, maxY)) = getCorners(getShape(elem).getBounds2D())
+        if elem.isInstanceOf[ExpandingBox] then
+            println(s"**** ADDING EXPANDING BOX ****")
         for x <- minX to maxX; y <- minY to maxY do
-            //println(s"Adding $elem to $x, $y")
             pushToGridZone((x, y), elem)
         this
 
     
 
     override def subtractOne(elem: A): this.type = 
-        println(s"Removing one $elem")
         val ((minX, minY), (maxX, maxY)) = getCorners(getShape(elem).getBounds2D())
+        if elem.isInstanceOf[ExpandingBox] then
+            println(s"**** REMOVING EXPANDING BOX ****")
         for x <- minX to maxX; y <- minY to maxY do
             removeFromGridZone((x, y), elem)
         this

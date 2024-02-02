@@ -6,8 +6,10 @@ import window.LeftMouse
 import java.awt.geom.AffineTransform
 import java.awt.Rectangle
 import java.awt.geom.Ellipse2D
+import java.awt.event.KeyEvent.*
 final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, knobRadius: Double) extends CanvasObject:
     assert(selected.nonEmpty, "You cannot resize an empty list of objects")
+
 
     case class CornerKnob(shape: Ellipse2D, corner: RectangleCorner, oppositeCorner: RectangleCorner):
         def contains(point: Vector2): Boolean = shape.contains(point)
@@ -19,6 +21,7 @@ final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, 
     private var startOfGrabBoundsOpt: Option[Rectangle] = None
     private var current: Vector[CanvasObject] = selected 
     private var cornerKnobs: Vector[CornerKnob] = getKnobs(shape)
+    override def accepting: Boolean = true
 
     private def getKnobs(bounds: Rectangle): Vector[CornerKnob] = Vector(
         CornerKnob(EllipseFactory.asCircle(bounds.getUpperLeft(), knobRadius), UpperLeft, LowerRight),
@@ -30,12 +33,20 @@ final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, 
     override def accept(handler: VisitorHandler): VisitorHandler = 
         def scalingNotInitialized: Boolean = scalingStartPos.isEmpty
         def scalingDrag: Boolean = scalingStartPos.isDefined && handler.windowInfo(LeftMouse)
-        var out = handler.stopped(InputConsumed)	
+        var out: VisitorHandler = handler
+            .stopped(InputConsumed)
+            .addedContext(Resized(current.map(_.UUID)))
         handler match
             case VisitorHandler(windowInfo, objectManager, _, _, None) => 
-                objectManager.getStore --= current
+                //objectManager.getStore --= current
                 val hoveredKnobOpt: Option[CornerKnob] = cornerKnobs.find(_.contains(windowInfo.canvasMousePosition))
-                if hoveredKnobOpt.isDefined then 
+                if windowInfo(VK_DELETE) then
+                    out = out
+                        .addedAction(RemoveObject(current))
+                        .addedContext(Removed(current.map(_.UUID)))
+                        .addedAction(SwapTool(nextTool))
+                    
+                else if hoveredKnobOpt.isDefined then 
                     val hoveredKnob: CornerKnob = hoveredKnobOpt.get
                     if scalingNotInitialized then
                         scalingStartPos = Some(windowInfo.canvasMousePosition)
@@ -47,6 +58,7 @@ final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, 
                         val startOfGrabBounds = startOfGrabBoundsOpt.get
                         val boundsFittedToActiveCorner: Rectangle = startOfGrabBounds.cornerMoved(hoveredKnob.corner, windowInfo.canvasMousePosition)
                         debugRectangle = Some(boundsFittedToActiveCorner)
+                        current.foreach(objectManager.remove(_, windowInfo))
                         val scale: Vector2 = Vector2(
                             boundsFittedToActiveCorner.getWidth() / startOfGrabBounds.getWidth(),
                             boundsFittedToActiveCorner.getHeight() / startOfGrabBounds.getHeight()
@@ -55,7 +67,8 @@ final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, 
                         transform.translate(startOfGrabBounds.getCorner(hoveredKnob.oppositeCorner))
                         transform.scale(scale)
                         transform.translate(-1*startOfGrabBounds.getCorner(hoveredKnob.oppositeCorner))
-                        current = startOfGrab.map(_.transformed(transform))
+                        //current = startOfGrab.map(_.transformed(transform))
+                        current = startOfGrab.map(objectManager.transformed(_, transform, windowInfo))
                         cornerKnobs = getKnobs(boundsFittedToActiveCorner)
                         
 
@@ -76,14 +89,16 @@ final case class Resize(selected: Vector[CanvasObject], nextTool: CanvasObject, 
                         startPos = Some(windowInfo.canvasMousePosition)
                     else if windowInfo(LeftMouse) then
                         val delta = windowInfo.canvasMousePosition - startPos.get
-                        current = startOfGrab.map(_.transformed(AffineTransform.getTranslateInstance(delta.x, delta.y)))
+                        current.foreach(objectManager.remove(_, windowInfo))
+                        //current = startOfGrab.map(_.transformed(AffineTransform.getTranslateInstance(delta.x, delta.y)))
+                        current = startOfGrab.map(objectManager.transformed(_, AffineTransform.getTranslateInstance(delta.x, delta.y), windowInfo))
                         cornerKnobs = getKnobs(shape)
                     else
                         startOfGrab = current 
                         startPos = None
                 else if windowInfo(LeftMouse) then 
                     out = out.addedAction(SwapTool(nextTool))
-                objectManager.getStore ++= current
+                //objectManager.getStore ++= current
             case _ =>
         out
     

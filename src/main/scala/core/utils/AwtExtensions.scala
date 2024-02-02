@@ -192,15 +192,37 @@ extension (g2d: Graphics2D)
         g2d.drawString(text, p1.x, p1.y)
 extension (shape: Shape)
     def contains(inner: Shape): Boolean =
-        println(s"outerBounds = ${shape.getBounds()}")
-        println(s"innerBounds = ${inner.getBounds()}")
-        println(s"outer.contains(inner) = ${shape.getBounds().contains(inner.getBounds())}")
         {shape.getBounds().contains(inner.getBounds())} && {{
             val selfArea = Area(shape)
             val innerArea = Area(inner)
             selfArea.intersect(innerArea)
             innerArea.contains(selfArea.getBounds2D())
         } || tryContains(shape, inner)}
+
+    def intersects(other: Shape): Boolean =
+        val selfBounds = shape.getBounds()
+        val otherBounds = other.getBounds()
+        selfBounds.intersects(otherBounds) && {
+            // TODO: refactor together with try contains so I am not duplicating my code like a crazy man
+            val upperPointInImageInner = otherBounds.getUpperLeft() - selfBounds.getUpperLeft()
+            val image = BufferedImage(selfBounds.getWidth(), selfBounds.getHeight(), BufferedImage.TYPE_INT_ARGB)
+            val g2d = image.createGraphics()
+            g2d.translate(-selfBounds.x, -selfBounds.y)
+            g2d.setColor(Color.WHITE)
+            g2d.fillRect(selfBounds.x, selfBounds.y, selfBounds.width, selfBounds.height)
+            g2d.setColor(Color.BLACK)
+            g2d.fill(shape)
+            val selfPoints = image.getNoneZeroIndices()
+
+            g2d.setColor(Color.WHITE)
+            g2d.fillRect(selfBounds.x, selfBounds.y, selfBounds.width, selfBounds.height)
+            g2d.setColor(Color.BLACK)
+            g2d.draw(other)
+            val innerPoints = image.getNoneZeroIndices()
+            g2d.dispose()
+
+            innerPoints.exists(selfPoints.contains)
+        }
 
 val clocker = CodeClocker()
 def tryContains(outer: Shape, inner: Shape): Boolean =
@@ -298,6 +320,10 @@ extension (rect: Rectangle)
 
     def getCenter: Vector2 =
         Vector2(rect.getCenterX(), rect.getCenterY())
+
+    def pad(padding: Double): Rectangle =
+        Rectangle(rect.x - padding, rect.y - padding, rect.width + padding*2, rect.height + padding*2)
+
 
 extension (rect2D: Rectangle2D)
     def getUpperLeft(): Vector2 = Vector2(rect2D.getMinX(), rect2D.getMinY())
@@ -459,5 +485,17 @@ extension (array: ArrayBuffer[Segment])
             
         array.foreach(addSegment(_))
         path
+
+
+extension (rectangles: Seq[Rectangle])
+    def createUnion: Rectangle =
+        assert(rectangles.nonEmpty, "Cannot create union of empty list")
+        rectangles.foldLeft(rectangles.head)((a, b) => a.union(b))
+
+extension (rectangles: Seq[Rectangle2D])
+    def createUnion: Rectangle2D =
+        assert(rectangles.nonEmpty, "Cannot create union of empty list")
+        rectangles.foldLeft(rectangles.head)((a, b) => a.createUnion(b))
+
 
         

@@ -5,6 +5,7 @@ import java.awt.Graphics2D
 import window.WindowInfo
 import java.awt.geom.Rectangle2D
 
+/*
 class ClampedCachedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject], initalCamera: Camera) extends CanvasObjectManager() {
 
     private var queried: Vector[CanvasObject] = Vector.empty
@@ -49,3 +50,4 @@ class ClampedCachedCanvasObjectManager(canvasObjects: GeometryStore[CanvasObject
 
 
 }
+*/
